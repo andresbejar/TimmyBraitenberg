@@ -22,6 +22,15 @@ public class Braitenberg {
 	private static MovePilot pilot;
 	private static EV3ColorSensor leftSensor;
 	private static EV3ColorSensor rightSensor;
+	
+	// Variables Globales para enamorado
+	
+	float [] samplesArray = new float[2];
+	float newLightValue;
+	SampleProvider takeLeftSample;
+	SampleProvider takeRightSample;
+	
+	// ---------------------------------
 
 	public static void main(String[] args) {
 		// hacer el setup del vehiculo
@@ -49,6 +58,80 @@ public class Braitenberg {
 		 */
 
 	}
+	
+	
+	private static void BraitenbergEnamorado(){
+		System.out.println("Entrando en modo enamorado");
+		Delay.msDelay(5000);		
+		takeSample();		
+				
+		float defaultLightValue = (samplesArray[0] + samplesArray[1]) / 2.0f;				
+		float magicNumber = 0.10f;				
+		boolean run = false;
+		
+		pilot.forward();	
+		
+		while(!Button.ENTER.isDown()){			
+			takeSample();			
+			if(newLightValue > defaultLightValue + 0.20){																	
+				pilot.setLinearSpeed(1000); 
+				
+				if(samplesArray[0] == samplesArray[1]){								// Va hacia adelante
+					run = true;
+					while(run){					
+						pilot.forward();						
+						takeSample();							
+						if(samplesArray[0] != samplesArray[1] || newLightValue == defaultLightValue + 0.20){
+							run = false;
+							pilot.setLinearSpeed(500);								
+						}					}						
+				}else{
+					if(samplesArray[0] >= samplesArray[1] + magicNumber){			// Va hacia izquierda
+						run = true;
+						pilot.rotate(45);
+						while(run){					
+							pilot.forward();						
+							takeSample();
+							if(samplesArray[0] <= samplesArray[1] || samplesArray[0] == samplesArray[1]){
+								run = false;
+								pilot.setLinearSpeed(500);			
+							}
+						}						
+					}else{
+						if(samplesArray[0] + magicNumber <= samplesArray[1]){		 // Va hacia derecha
+							run = true;
+							pilot.rotate(-45);
+							while(run){					
+								pilot.forward();						
+								takeSample();	
+								if(samplesArray[0] >= samplesArray[1] || samplesArray[0] == samplesArray[1]){
+									run = false;
+									pilot.setLinearSpeed(500);		
+								}
+							}						
+						}							
+					}						
+				}								
+			}
+			else{												
+				pilot.setLinearSpeed(500);
+				pilot.forward();				
+			}
+		}
+	}
+	
+	private static void takeSample(){
+			takeLeftSample= leftSensor.getAmbientMode();
+			takeRightSample = rightSensor.getAmbientMode();
+			takeLeftSample.fetchSample(samplesArray, 0);
+			takeRightSample.fetchSample(samplesArray, 1);
+			newLightValue = (samplesArray[0] + samplesArray[1]) / 2.0f;
+			System.out.println("Nuevo valor de luz: ");
+			System.out.println(newLightValue);
+	}
+
+	
+	
 	
 	private static void BraitenbergAgresivo(){
 		System.out.println("Entrando en modo agresivo");
@@ -127,5 +210,4 @@ public class Braitenberg {
 			}
 		}
 	}
-
 }
